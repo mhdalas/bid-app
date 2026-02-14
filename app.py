@@ -226,10 +226,52 @@ import streamlit as st
 st.set_page_config(page_title="Bid App", layout="wide")
 st.title("Forced Win Combination")
 
-oce = st.number_input("Owner's Estimated Cost (OCE)", min_value=0.0, value=0.0, step=1.0)
+oce = st.number_input("Owner's Estimated Cost (OCE)", min_value=0.0, value=1000.0, step=1.0)
 coeff = st.slider("NPPI Coefficient", min_value=0.60, max_value=1.00, value=0.90, step=0.001)
 
-st.write("App is running.")
-st.write(f"OCE: {oce}, Coeff: {coeff}")
+raw_bids = st.text_area(
+    "Bidders (one per line: name,amount)",
+    value="A,980\nB,1010\nC,1060\nD,1120",
+    height=140,
+)
 
-st.info("Next step: connect these inputs to your `forced_win_combinations_fast(...)` function.")
+bidders: list[Bidder] = []
+parse_errors: list[str] = []
+
+for line_no, line in enumerate(raw_bids.splitlines(), start=1):
+    line = line.strip()
+    if not line:
+        continue
+    parts = [p.strip() for p in line.split(",")]
+    if len(parts) != 2:
+        parse_errors.append(f"Line {line_no}: use format name,amount")
+        continue
+    name, amount_txt = parts
+    try:
+        amount = float(amount_txt)
+        bidders.append(Bidder(name=name, value=amount))
+    except ValueError:
+        parse_errors.append(f"Line {line_no}: amount must be numeric")
+
+if parse_errors:
+    st.error("\n".join(parse_errors))
+
+if bidders:
+    target_name = st.selectbox(
+        "Target bidder",
+        options=[b.name for b in bidders],
+        index=0,
+    )
+    target_idx = next(i for i, b in enumerate(bidders) if b.name == target_name)
+
+    if st.button("Run", type="primary"):
+        result = forced_win_combinations_fast(
+            oce=oce,
+            coeff=coeff,
+            bidders_all=bidders,
+            target_idx_all=target_idx,
+            stop_when_no_matches=True,
+        )
+        st.text(result)
+else:
+    st.warning("Enter at least one valid bidder line.")
