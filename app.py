@@ -220,3 +220,16 @@ def forced_win_combinations_fast(
     # For simplicity, leave as-is; output is still correct.
 
     return "\n".join(buf).strip() + "\n"
+
+import streamlit as st
+
+st.set_page_config(page_title="Bid App", layout="wide")
+st.title("Forced Win Combination")
+
+oce = st.number_input("Owner's Estimated Cost (OCE)", min_value=0.0, value=0.0, step=1.0)
+coeff = st.slider("NPPI Coefficient", min_value=0.60, max_value=1.00, value=0.90, step=0.001)
+
+st.write("App is running.")
+st.write(f"OCE: {oce}, Coeff: {coeff}")
+
+st.info("Next step: connect these inputs to your `forced_win_combinations_fast(...)` function.")
